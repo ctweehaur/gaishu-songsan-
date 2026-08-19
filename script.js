@@ -1,5 +1,5 @@
 // ============================================
-// script.js - Vue 逻辑（修复版）
+// script.js - Vue 逻辑（提取要点修复版）
 // ============================================
 
 const { createApp, ref, computed, reactive, onBeforeUnmount, nextTick } = Vue;
@@ -446,8 +446,8 @@ createApp({
             showToast('✅ 评估完成！', 'success');
         };
 
-        // ==================== 🛠️ 修复：浮动提取按钮 ====================
-        const handleTextSelection = (event) => {
+        // ==================== 🛠️ 修复：提取要点 ====================
+        const handleTextSelection = () => {
             if (isExamMode.value) return;
 
             // 使用 nextTick 确保选择完成
@@ -475,7 +475,6 @@ createApp({
                             };
                         }
                     } catch (e) {
-                        // 如果获取位置失败，使用默认位置
                         floatBtnStyle.value = {
                             top: '30px',
                             left: '50%',
@@ -489,9 +488,11 @@ createApp({
         };
 
         const extractSelection = () => {
-            if (selectedText) {
+            if (selectedText && selectedText.trim().length > 0) {
+                // 检查是否已存在相同要点
                 const exists = extractedPoints.value.some(p => p.text === selectedText);
                 if (!exists) {
+                    // 添加到提取列表
                     extractedPoints.value.push({
                         text: selectedText,
                         verified: undefined
@@ -500,6 +501,8 @@ createApp({
                 } else {
                     showToast('⚠️ 已存在相同要点', 'info');
                 }
+            } else {
+                showToast('⚠️ 请先选择文字', 'info');
             }
             showFloatBtn.value = false;
             window.getSelection().removeAllRanges();
@@ -548,39 +551,46 @@ createApp({
         const getSampleText = () => currentQuestion.value.standard_summary || '';
         const getSampleWordCount = () => countSPMWords(currentQuestion.value.standard_summary || '');
 
+        // 单题模式下不需要切换题目，但保留函数以防万一
         const selectQuestion = (index) => {
-            currentQIndex.value = index;
-            userInput.value = '';
-            extractedPoints.value = [];
-            submitted.value = false;
-            showSample.value = false;
-            showFloatBtn.value = false;
-            selfCheckItems.value.forEach(item => item.done = false);
+            // 单题模式，只有 index 0 有效
+            if (index === 0) {
+                currentQIndex.value = 0;
+                userInput.value = '';
+                extractedPoints.value = [];
+                submitted.value = false;
+                showSample.value = false;
+                showFloatBtn.value = false;
+                selfCheckItems.value.forEach(item => item.done = false);
 
-            try {
-                const saved = localStorage.getItem(`history_${currentQuestion.value.id}`);
-                if (saved) history.value = JSON.parse(saved);
-            } catch (e) {}
+                try {
+                    const saved = localStorage.getItem(`history_${currentQuestion.value.id}`);
+                    if (saved) history.value = JSON.parse(saved);
+                } catch (e) {}
 
-            try {
-                const draft = localStorage.getItem(`draft_${currentQuestion.value.id}`);
-                if (draft) userInput.value = draft;
-            } catch (e) {}
+                try {
+                    const draft = localStorage.getItem(`draft_${currentQuestion.value.id}`);
+                    if (draft) userInput.value = draft;
+                } catch (e) {}
 
-            if (isExamMode.value) {
-                clearInterval(timerInterval);
-                timerSeconds.value = 1200;
-                timerInterval = setInterval(() => {
-                    if (timerSeconds.value > 0) timerSeconds.value--;
-                    else {
-                        clearInterval(timerInterval);
-                        alert('考场时间到！已自动提交。');
-                        evaluateAnswer();
-                    }
-                }, 1000);
+                if (isExamMode.value) {
+                    clearInterval(timerInterval);
+                    timerSeconds.value = 1200;
+                    timerInterval = setInterval(() => {
+                        if (timerSeconds.value > 0) timerSeconds.value--;
+                        else {
+                            clearInterval(timerInterval);
+                            alert('考场时间到！已自动提交。');
+                            evaluateAnswer();
+                        }
+                    }, 1000);
+                }
+                showToast(`📖 切换到：${currentQuestion.value.short_title}`, 'info');
             }
-            showToast(`📖 切换到：${currentQuestion.value.short_title}`, 'info');
         };
+
+        // 初始化时加载第一个题目
+        selectQuestion(0);
 
         const autoSave = () => {
             if (!submitted.value) {
@@ -647,17 +657,6 @@ createApp({
             { id: 3, label: '语言通顺，无重大语病', done: false },
             { id: 4, label: '已在文末注明确实字数', done: false }
         ]);
-
-        // ==================== 初始化 ====================
-        const init = () => {
-            try {
-                const saved = localStorage.getItem(`history_${currentQuestion.value.id}`);
-                if (saved) history.value = JSON.parse(saved);
-                const draft = localStorage.getItem(`draft_${currentQuestion.value.id}`);
-                if (draft) userInput.value = draft;
-            } catch (e) {}
-        };
-        init();
 
         onBeforeUnmount(() => {
             if (timerInterval) clearInterval(timerInterval);
