@@ -1,5 +1,5 @@
 // ============================================
-// script.js - Vue 逻辑（提取要点修复版）
+// script.js - Vue 逻辑（修复版）
 // ============================================
 
 const { createApp, ref, computed, reactive, onBeforeUnmount, nextTick } = Vue;
@@ -129,7 +129,7 @@ createApp({
         const floatBtnStyle = ref({ top: '0px', left: '0px' });
         let selectedText = '';
 
-        const currentQuestion = computed(() => questions[currentQIndex.value]);
+        const currentQuestion = computed(() => questions[0]);
 
         // ==================== 计算属性 ====================
         const actualWordCount = computed(() => countSPMWords(userInput.value));
@@ -450,7 +450,6 @@ createApp({
         const handleTextSelection = () => {
             if (isExamMode.value) return;
 
-            // 使用 nextTick 确保选择完成
             nextTick(() => {
                 const selection = window.getSelection();
                 if (!selection || selection.isCollapsed) {
@@ -489,14 +488,14 @@ createApp({
 
         const extractSelection = () => {
             if (selectedText && selectedText.trim().length > 0) {
-                // 检查是否已存在相同要点
                 const exists = extractedPoints.value.some(p => p.text === selectedText);
                 if (!exists) {
-                    // 添加到提取列表
-                    extractedPoints.value.push({
+                    // 使用展开运算符创建新数组，强制触发响应式更新
+                    const newPoint = {
                         text: selectedText,
                         verified: undefined
-                    });
+                    };
+                    extractedPoints.value = [...extractedPoints.value, newPoint];
                     showToast(`📌 已提取："${selectedText}"`, 'success');
                 } else {
                     showToast('⚠️ 已存在相同要点', 'info');
@@ -551,46 +550,18 @@ createApp({
         const getSampleText = () => currentQuestion.value.standard_summary || '';
         const getSampleWordCount = () => countSPMWords(currentQuestion.value.standard_summary || '');
 
-        // 单题模式下不需要切换题目，但保留函数以防万一
-        const selectQuestion = (index) => {
-            // 单题模式，只有 index 0 有效
-            if (index === 0) {
-                currentQIndex.value = 0;
-                userInput.value = '';
-                extractedPoints.value = [];
-                submitted.value = false;
-                showSample.value = false;
-                showFloatBtn.value = false;
-                selfCheckItems.value.forEach(item => item.done = false);
-
-                try {
-                    const saved = localStorage.getItem(`history_${currentQuestion.value.id}`);
-                    if (saved) history.value = JSON.parse(saved);
-                } catch (e) {}
-
-                try {
-                    const draft = localStorage.getItem(`draft_${currentQuestion.value.id}`);
-                    if (draft) userInput.value = draft;
-                } catch (e) {}
-
-                if (isExamMode.value) {
-                    clearInterval(timerInterval);
-                    timerSeconds.value = 1200;
-                    timerInterval = setInterval(() => {
-                        if (timerSeconds.value > 0) timerSeconds.value--;
-                        else {
-                            clearInterval(timerInterval);
-                            alert('考场时间到！已自动提交。');
-                            evaluateAnswer();
-                        }
-                    }, 1000);
-                }
-                showToast(`📖 切换到：${currentQuestion.value.short_title}`, 'info');
-            }
+        // ==================== 初始化 ====================
+        // 单题模式，直接加载第一个题目
+        const init = () => {
+            currentQIndex.value = 0;
+            try {
+                const saved = localStorage.getItem(`history_${currentQuestion.value.id}`);
+                if (saved) history.value = JSON.parse(saved);
+                const draft = localStorage.getItem(`draft_${currentQuestion.value.id}`);
+                if (draft) userInput.value = draft;
+            } catch (e) {}
         };
-
-        // 初始化时加载第一个题目
-        selectQuestion(0);
+        init();
 
         const autoSave = () => {
             if (!submitted.value) {
@@ -706,7 +677,6 @@ createApp({
             handleTextSelection,
             extractSelection,
             insertPoint,
-            selectQuestion,
             autoSave,
             toggleMode,
             evaluateAnswer,
