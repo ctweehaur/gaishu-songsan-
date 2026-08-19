@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
     
-    <!-- 本地文件 -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -38,115 +37,140 @@
             </div>
         </div>
 
-        <!-- 顶栏 -->
-        <header class="bg-indigo-900 text-white shadow-lg sticky top-0 z-50">
+        <!-- ===== 顶栏 ===== -->
+        <header class="bg-gradient-to-r from-indigo-900 to-indigo-800 text-white shadow-lg sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="bg-amber-500 text-indigo-950 font-bold p-2 rounded-lg text-lg flex items-center justify-center w-9 h-9 shadow">
-                        述
+                    <div class="bg-amber-400 text-indigo-950 font-bold p-2 rounded-xl text-lg flex items-center justify-center w-9 h-9 shadow-lg shadow-amber-400/30">
+                        <i class="fa-solid fa-pen-fancy text-sm"></i>
                     </div>
                     <div>
-                        <h1 class="font-bold text-base leading-tight">华文概述题 · SPM标准</h1>
-                        <p class="text-xs text-indigo-200">{{ getSlogan() }}</p>
+                        <h1 class="font-bold text-base leading-tight tracking-wide">华文概述题 · SPM标准</h1>
+                        <p class="text-xs text-indigo-200/80">{{ getSlogan() }}</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
                     <button @click="toggleMode"
-                    class="px-3 py-1.5 rounded-full text-xs font-medium transition"
-                    :class="isExamMode ? 'bg-amber-500 text-indigo-950' : 'bg-indigo-800 text-indigo-200 hover:text-white'">
+                    class="px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200"
+                    :class="isExamMode ? 'bg-amber-400 text-indigo-950 shadow-lg shadow-amber-400/30' : 'bg-indigo-700/50 text-indigo-200 hover:bg-indigo-600'">
                     <i :class="isExamMode ? 'fa-solid fa-stopwatch' : 'fa-solid fa-lightbulb'"></i>
                     {{ isExamMode ? '考场模式' : '学习模式' }}
                 </button>
-                <div v-if="isExamMode" class="bg-indigo-950 px-3 py-1 rounded-md text-amber-400 font-mono text-sm">
+                <div v-if="isExamMode" class="bg-indigo-950/60 px-3 py-1 rounded-md text-amber-400 font-mono text-sm border border-indigo-600">
                     <i class="fa-regular fa-clock mr-1"></i> {{ formattedTime }}
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-4 flex-grow w-full">
+    <main class="max-w-7xl mx-auto px-4 py-5 flex-grow w-full">
 
-        <!-- 题目选择 -->
-        <div class="flex space-x-2 overflow-x-auto bg-white p-2 rounded-lg shadow-sm mb-4">
-            <button v-for="(q, index) in questions" :key="q.id"
-            @click="selectQuestion(index)"
-            class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap flex items-center space-x-1.5 border"
-            :class="currentQIndex === index ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200'">
-            <span class="w-5 h-5 rounded-full bg-slate-200 text-slate-700 text-[10px] flex items-center justify-center font-bold"
-            :class="{'!bg-indigo-500 !text-white': currentQIndex === index}">
-            {{ index + 1 }}
-        </span>
-        <span>{{ q.short_title }}</span>
-        <span class="text-[10px] px-1.5 py-0.5 rounded font-medium"
-        :class="getTagClass(q.category)">
-        {{ q.category }}
-    </span>
-</button>
-</div>
-
-<!-- 脚手架区域 -->
-<div :class="isExamMode ? 'exam-mode-hidden' : ''">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
-        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
-            <div class="flex items-center space-x-2 text-xs font-bold text-indigo-700 mb-1">
-                <i class="fa-solid fa-list-check"></i>
-                <span>📋 段落要点</span>
-            </div>
-            <div class="space-y-1 text-[11px] text-slate-600">
-                <div v-for="(point, idx) in getParagraphPoints()" :key="idx" class="flex items-start space-x-1">
-                    <span class="text-indigo-400 font-bold">{{ idx+1 }}.</span>
-                    <span>{{ point }}</span>
+        <!-- ===== 题目信息栏（取代原来的题目选择按钮） ===== -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 mb-5 flex flex-wrap items-center justify-between hover:shadow-md transition-shadow duration-300">
+            <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/25">
+                    <i class="fa-solid fa-book-open text-sm"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-lg font-bold text-slate-800 tracking-tight">{{ currentQuestion.short_title }}</span>
+                        <span class="text-[10px] px-3 py-0.5 rounded-full font-medium tracking-wide" :class="getTagClass(currentQuestion.category)">
+                            {{ currentQuestion.category }}
+                        </span>
+                    </div>
+                    <div class="flex items-center space-x-4 text-[11px] text-slate-400 mt-0.5">
+                        <span><i class="fa-regular fa-file-lines mr-1"></i> 上限 {{ currentQuestion.word_limit }} 字</span>
+                        <span><i class="fa-regular fa-star mr-1"></i> 满分 20 分</span>
+                        <span><i class="fa-regular fa-circle-check mr-1"></i> {{ currentQuestion.rubrics.length }} 个采分点</span>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
-            <div class="flex items-center space-x-2 text-xs font-bold text-emerald-700 mb-1">
-                <i class="fa-solid fa-sitemap"></i>
-                <span>📝 结构模板</span>
-            </div>
-            <div class="text-[11px] text-slate-700 leading-relaxed">
-                <div v-for="(step, idx) in getStructureTemplate()" :key="idx" class="flex items-start gap-1 py-0.5">
-                    <span class="template-step">
-                        <span class="num">{{ idx + 1 }}</span>
-                        {{ step }}
+            <div class="flex items-center space-x-4 text-sm">
+                <div class="flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60">
+                    <span class="text-xs text-slate-400">关键词</span>
+                    <span class="text-sm font-bold" :class="keywordHitRate >= 80 ? 'text-emerald-600' : keywordHitRate >= 50 ? 'text-amber-600' : 'text-rose-500'">
+                        {{ keywordHitCount }}/{{ totalKeywords }}
                     </span>
-                    <span v-if="idx < getStructureTemplate().length - 1" class="template-arrow">→</span>
+                    <span class="text-[10px] text-slate-400">|</span>
+                    <span class="text-xs font-medium" :class="keywordHitRate >= 80 ? 'text-emerald-600' : keywordHitRate >= 50 ? 'text-amber-600' : 'text-rose-500'">
+                        {{ keywordHitRate }}%
+                    </span>
+                </div>
+                <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500"
+                    :class="keywordHitRate >= 80 ? 'bg-emerald-500' : keywordHitRate >= 50 ? 'bg-amber-500' : 'bg-rose-500'"
+                    :style="{ width: keywordHitRate + '%' }">
                 </div>
             </div>
-            <div class="text-[9px] text-slate-400 mt-1">💡 按这个顺序概括每段核心内容</div>
+        </div>
+    </div>
+
+    <!-- ===== 脚手架区域 ===== -->
+    <div :class="isExamMode ? 'exam-mode-hidden' : ''">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+
+            <!-- 段落要点 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 hover:shadow-md transition-shadow duration-300">
+                <div class="flex items-center space-x-2 text-xs font-bold text-indigo-600 mb-2">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>📋 段落要点</span>
+                </div>
+                <div class="space-y-1 text-[11px] text-slate-600">
+                    <div v-for="(point, idx) in getParagraphPoints()" :key="idx" class="flex items-start space-x-2 p-1 rounded-lg hover:bg-slate-50/50 transition-colors">
+                        <span class="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">{{ idx+1 }}</span>
+                        <span>{{ point }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 结构模板 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 hover:shadow-md transition-shadow duration-300">
+                <div class="flex items-center space-x-2 text-xs font-bold text-emerald-600 mb-2">
+                    <i class="fa-solid fa-sitemap"></i>
+                    <span>📝 结构模板</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-700">
+                    <span v-for="(step, idx) in getStructureTemplate()" :key="idx"
+                    class="inline-flex items-center px-3 py-1.5 bg-slate-50/80 rounded-xl border border-slate-200/60">
+                    <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 text-[8px] font-bold flex items-center justify-center mr-1.5">{{ idx+1 }}</span>
+                    {{ step }}
+                </span>
+                <span v-if="idx < getStructureTemplate().length - 1" class="text-slate-300 text-xs">→</span>
+            </div>
+            <div class="text-[9px] text-slate-400 mt-2">💡 按这个顺序概括每段核心内容</div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2 text-xs font-bold text-amber-700">
+        <!-- 关键词覆盖 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 hover:shadow-md transition-shadow duration-300">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2 text-xs font-bold text-amber-600">
                     <i class="fa-solid fa-key"></i>
                     <span>🔑 关键词覆盖</span>
                 </div>
                 <div class="flex items-center space-x-2">
                     <span class="text-[10px] text-slate-400">{{ keywordHitCount }}/{{ totalKeywords }}</span>
-                    <span class="text-[10px] font-bold" :class="keywordHitRate >= 80 ? 'text-emerald-600' : keywordHitRate >= 50 ? 'text-amber-600' : 'text-rose-600'">
+                    <span class="text-[10px] font-bold" :class="keywordHitRate >= 80 ? 'text-emerald-600' : keywordHitRate >= 50 ? 'text-amber-600' : 'text-rose-500'">
                         {{ keywordHitRate }}%
                     </span>
                 </div>
             </div>
-            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1">
-                <div class="h-full rounded-full keyword-progress-bar transition-all duration-500"
-                :class="keywordHitRate >= 80 ? 'bg-emerald' : keywordHitRate >= 50 ? 'bg-amber' : 'bg-rose'"
+            <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-2.5">
+                <div class="h-full rounded-full transition-all duration-500"
+                :class="keywordHitRate >= 80 ? 'bg-emerald-500' : keywordHitRate >= 50 ? 'bg-amber-500' : 'bg-rose-500'"
                 :style="{ width: keywordHitRate + '%' }">
             </div>
         </div>
-        <div class="flex flex-wrap gap-0.5 mt-2">
+        <div class="flex flex-wrap gap-1">
             <span v-for="(slot, idx) in keywordSlots" :key="idx"
             class="keyword-slot"
             :class="slot.status">
             <span class="keyword-text">{{ slot.label }}</span>
         </span>
     </div>
-    <div class="flex text-[9px] text-slate-400 mt-1 space-x-3">
-        <span><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-0.5"></span> 已覆盖</span>
-        <span><span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-0.5"></span> 部分</span>
-        <span><span class="inline-block w-2 h-2 rounded-full bg-slate-300 mr-0.5"></span> 待发现</span>
+    <div class="flex text-[9px] text-slate-400 mt-2 space-x-3">
+        <span><span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1"></span> 已覆盖</span>
+        <span><span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400 mr-1"></span> 部分</span>
+        <span><span class="inline-block w-2.5 h-2.5 rounded-full bg-slate-300 mr-1"></span> 待发现</span>
         <span class="text-[8px] text-slate-400 ml-auto">悬停 ? 查看提示</span>
     </div>
 </div>
@@ -154,88 +178,77 @@
 </div>
 </div>
 
-<!-- 左右分栏 -->
-<div class="flex flex-col lg:flex-row gap-4">
+<!-- ===== 左右分栏 ===== -->
+<div class="flex flex-col lg:flex-row gap-5">
 
     <!-- 左栏：阅读 -->
     <div class="lg:w-7/12 flex flex-col">
-        <div class="bg-white rounded-xl shadow-md border border-slate-200 flex-grow flex flex-col overflow-hidden relative">
-            <div class="bg-indigo-50 px-4 py-2 border-b border-slate-200 flex justify-between items-center">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 flex-grow flex flex-col overflow-hidden hover:shadow-md transition-shadow duration-300">
+            <div class="bg-gradient-to-r from-indigo-50/80 to-indigo-50/40 px-4 py-3 border-b border-slate-200/60 flex justify-between items-center">
                 <div class="flex items-center space-x-3 text-xs">
-                    <span class="font-bold text-indigo-700"><i class="fa-solid fa-book-open mr-1"></i> 阅读文本</span>
-                    <span class="text-slate-400">|</span>
+                    <span class="font-bold text-indigo-700"><i class="fa-solid fa-book-open mr-1.5"></i> 阅读文本</span>
+                    <span class="text-slate-300">|</span>
                     <span class="text-slate-500">{{ currentQuestion.passage.length }} 段</span>
-                    <span class="px-2 py-0.5 rounded-full font-medium" :class="getTagClass(currentQuestion.category)">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-medium" :class="getTagClass(currentQuestion.category)">
                         {{ currentQuestion.category }}
                     </span>
                 </div>
                 <div class="flex items-center space-x-2" :class="isExamMode ? 'exam-mode-hidden' : ''">
-                    <button @click="clearAllExtracted" class="text-xs text-slate-500 hover:text-red-600 transition px-2 py-1 rounded hover:bg-red-50">
-                        <i class="fa-solid fa-trash-can mr-1"></i> 清空全部
+                    <button @click="clearAllExtracted" class="text-xs text-slate-400 hover:text-rose-500 transition-colors px-2 py-1 rounded-lg hover:bg-rose-50/50">
+                        <i class="fa-solid fa-eraser mr-1"></i> 清除高亮
                     </button>
                 </div>
             </div>
 
-            <div v-if="showFloatBtn" class="float-btn" :style="floatBtnStyle" @click="extractSelection">
-                <i class="fa-solid fa-plus mr-1"></i> 提取为要点
-            </div>
-
-            <div class="p-5 scroll-area flex-grow"
+            <div class="p-5 scroll-area flex-grow relative"
             @mouseup="handleTextSelection"
             @touchend="handleTextSelection">
-            <div class="space-y-4 text-slate-700 leading-relaxed text-justify serif-text text-base">
+            <!-- 浮动提取按钮 -->
+            <div v-if="showFloatBtn" class="float-btn" :style="floatBtnStyle" @click="extractSelection">
+                <i class="fa-solid fa-plus mr-1.5"></i> 提取为要点
+            </div>
+            <div class="space-y-4 text-slate-700 leading-relaxed text-justify serif-text text-[15px]">
                 <p v-for="(paragraph, pIdx) in currentQuestion.passage" :key="pIdx"
                 class="indent-8" v-html="highlightParagraph(paragraph)">
             </p>
         </div>
     </div>
 
-    <div v-if="!isExamMode && extractedPoints.length > 0" class="bg-amber-50 border-t border-amber-200 p-3">
+    <div v-if="!isExamMode && extractedPoints.length > 0" class="bg-amber-50/80 border-t border-amber-200/60 p-3">
         <div class="text-xs font-bold text-amber-700 mb-1.5 flex justify-between items-center">
-            <span>📌 已提取要点 ({{ extractedPoints.length }}项)</span>
-            <div class="flex items-center space-x-2">
-                <span class="text-[10px] text-amber-500">点击可插入书写区</span>
-                <button @click="verifyAllPoints" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium px-2 py-0.5 bg-indigo-50 rounded transition">
-                    <i class="fa-solid fa-rotate-right mr-0.5"></i> 全部验证
-                </button>
-            </div>
+            <span>📌 已提取要点 ({{ extractedPoints.length }}项) <span class="font-normal text-amber-500 text-[10px]">— 点击可插入书写区</span></span>
+            <button @click="verifyAllPoints" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-medium px-2.5 py-0.5 bg-indigo-50 rounded-lg transition-colors hover:bg-indigo-100">
+                <i class="fa-solid fa-rotate-right mr-0.5"></i> 全部验证
+            </button>
         </div>
         <div class="flex flex-wrap gap-1.5">
             <div v-for="(point, idx) in extractedPoints" :key="idx"
-            class="point-item inline-flex items-center gap-1 bg-white px-2 py-1 rounded shadow-sm border border-amber-200 hover:border-amber-300 transition"
-            :class="{'border-emerald-300 bg-emerald-50': point.verified === true, 'border-rose-300 bg-rose-50': point.verified === false}">
-            <span class="text-xs text-slate-700 cursor-pointer hover:text-indigo-600"
+            class="point-item inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-xl shadow-sm border border-amber-200/60 hover:border-amber-300 transition-all cursor-pointer"
+            :class="{'border-emerald-300 bg-emerald-50/60': point.verified === true, 'border-rose-300 bg-rose-50/60': point.verified === false}"
             @click="insertPoint(point.text)">
-            {{ point.text }}
-        </span>
-
-        <button @click="verifyPoint(idx)"
-        class="verify-btn text-slate-400 hover:text-indigo-600"
-        title="验证这个要点是否有效">
-        <i class="fa-solid fa-circle-question"></i>
-    </button>
-
-    <span v-if="point.verified === true" class="verify-result valid">
-        <i class="fa-regular fa-circle-check mr-0.5"></i> 有效
-    </span>
-    <span v-else-if="point.verified === false" class="verify-result invalid">
-        <i class="fa-regular fa-circle-xmark mr-0.5"></i> 非要点
-    </span>
-    <span v-else class="verify-result pending">
-        待验证
-    </span>
-
-    <button @click="removePoint(idx)"
-    class="text-amber-400 hover:text-red-600 transition ml-0.5 text-xs">
-    ✕
-</button>
-</div>
-</div>
-<div class="flex text-[10px] text-slate-500 mt-1 space-x-3">
-    <span>✅ 有效: {{ validCount }}</span>
-    <span>❌ 非要点: {{ invalidCount }}</span>
-    <span>⏳ 待验证: {{ pendingCount }}</span>
-</div>
+            <span class="text-xs text-slate-700">{{ point.text }}</span>
+            <button @click.stop="verifyPoint(idx)" class="text-slate-400 hover:text-indigo-600 transition-colors text-[10px]">
+                <i class="fa-solid fa-circle-question"></i>
+            </button>
+            <span v-if="point.verified === true" class="verify-result valid text-[9px]">
+                <i class="fa-regular fa-circle-check mr-0.5"></i> 有效
+            </span>
+            <span v-else-if="point.verified === false" class="verify-result invalid text-[9px]">
+                <i class="fa-regular fa-circle-xmark mr-0.5"></i> 非要点
+            </span>
+            <span v-else class="verify-result pending text-[9px]">
+                待验证
+            </span>
+            <button @click.stop="extractedPoints.splice(idx, 1)" class="text-slate-300 hover:text-rose-500 transition-colors text-[10px] ml-0.5">
+                ✕
+            </button>
+        </div>
+    </div>
+    <div class="flex text-[10px] text-slate-500 mt-1.5 space-x-4">
+        <span>✅ 有效: <strong class="text-emerald-600">{{ validCount }}</strong></span>
+        <span>❌ 非要点: <strong class="text-rose-500">{{ invalidCount }}</strong></span>
+        <span>⏳ 待验证: <strong class="text-amber-500">{{ pendingCount }}</strong></span>
+    </div>
 </div>
 </div>
 </div>
@@ -243,144 +256,155 @@
 <!-- 右栏：书写 -->
 <div class="lg:w-5/12 flex flex-col space-y-4">
 
-    <div class="bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-lg">
-        <h2 class="text-xs font-bold text-amber-800">🎯 概述任务</h2>
-        <p class="text-slate-800 font-medium text-sm">{{ currentQuestion.prompt }}</p>
-        <div class="mt-1 text-xs text-amber-700 flex flex-wrap gap-2">
-            <span>上限 <strong>{{ currentQuestion.word_limit }}</strong> 字</span>
-            <span class="text-emerald-600">宽限 +4 字</span>
-            <span>满分 20 分</span>
-            <span class="text-rose-600">每超5字扣1分</span>
+    <!-- 题目要求 -->
+    <div class="bg-gradient-to-r from-amber-50/80 to-amber-50/40 border-l-4 border-amber-400 p-4 rounded-r-2xl shadow-sm">
+        <h2 class="text-[10px] font-bold text-amber-700 uppercase tracking-wider mb-1">
+            <i class="fa-solid fa-bullseye mr-1.5"></i> 概述任务
+        </h2>
+        <p class="text-slate-800 font-medium text-sm leading-relaxed">{{ currentQuestion.prompt }}</p>
+        <div class="mt-2 flex flex-wrap gap-3 text-[10px] text-amber-700/80">
+            <span><i class="fa-regular fa-font mr-1"></i> 上限 <strong>{{ currentQuestion.word_limit }}</strong> 字</span>
+            <span class="text-emerald-600"><i class="fa-regular fa-circle-check mr-1"></i> 宽限 +4 字</span>
+            <span><i class="fa-regular fa-star mr-1"></i> 满分 20 分</span>
+            <span class="text-rose-500"><i class="fa-regular fa-clock mr-1"></i> 每超5字扣1分</span>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-md border border-slate-200 flex-grow flex flex-col p-4">
-        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-            <label class="text-xs font-bold text-slate-500">
-                <i class="fa-solid fa-pen-to-square mr-1 text-indigo-600"></i> 概述书写区
+    <!-- 书写区 -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 flex-grow flex flex-col p-4 hover:shadow-md transition-shadow duration-300">
+        <div class="flex justify-between items-center mb-2.5 flex-wrap gap-2">
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center">
+                <i class="fa-regular fa-pen-to-square mr-1.5 text-indigo-500"></i> 概述书写区
             </label>
-            <div class="flex items-center space-x-2">
-                <div class="w-20 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                    <div class="h-full progress-bar rounded-full"
+            <div class="flex items-center space-x-3">
+                <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-300"
                     :class="wordStatus === 'penalty' ? 'bg-rose-500' : wordStatus === 'grace' ? 'bg-amber-500' : 'bg-emerald-500'"
                     :style="{ width: Math.min(wordProgress, 100) + '%' }">
                 </div>
             </div>
-            <span class="text-xs font-mono px-2 py-0.5 rounded font-bold" :class="wordCountClass">
+            <span class="text-xs font-mono px-2.5 py-0.5 rounded-lg font-bold" :class="wordCountClass">
                 {{ actualWordCount }} / {{ currentQuestion.word_limit }}
             </span>
         </div>
         <div class="text-[10px] text-slate-400 flex justify-between">
-            <span>📝 实字: {{ actualWordCount }} | 标点: {{ punctuationCount }}</span>
+            <span>📝 实字: {{ actualWordCount }} ｜ 标点: {{ punctuationCount }}</span>
             <span v-if="wordStatus === 'grace'" class="text-amber-600">✅ 宽限 +{{ actualWordCount - currentQuestion.word_limit }}</span>
-            <span v-if="wordStatus === 'penalty'" class="text-rose-600">⚠️ 扣 {{ wordPenalty }} 分</span>
+            <span v-if="wordStatus === 'penalty'" class="text-rose-500">⚠️ 扣 {{ wordPenalty }} 分</span>
             <span v-if="declaredWordCount > 0 && declaredWordCount === actualWordCount" class="text-emerald-600">✅ 声明准确</span>
-            <span v-else-if="declaredWordCount > 0" class="text-rose-600">⚠️ 声明不符</span>
+            <span v-else-if="declaredWordCount > 0" class="text-rose-500">⚠️ 声明不符</span>
         </div>
     </div>
 
     <textarea v-model="userInput"
     placeholder="在此输入你的概述答案..."
-    class="w-full flex-grow p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none text-sm min-h-[150px]"
+    class="w-full flex-grow p-4 border rounded-xl focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400 outline-none resize-none text-slate-700 text-sm leading-relaxed border-slate-200/80 min-h-[160px] transition-shadow duration-200"
     :disabled="submitted"
     @input="autoSave"></textarea>
 
-    <div v-if="!submitted && !isExamMode" class="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-200">
+    <div v-if="!submitted && !isExamMode" class="mt-1 p-3 bg-slate-50/80 rounded-xl border border-slate-200/60">
         <div class="text-xs font-bold text-slate-600">✅ 提交前自评：</div>
-        <div class="grid grid-cols-2 gap-1 text-[10px]">
-            <label v-for="check in selfCheckItems" :key="check.id" class="flex items-center space-x-1">
-                <input type="checkbox" v-model="check.done" class="w-3 h-3">
+        <div class="grid grid-cols-2 gap-1 text-[10px] mt-1">
+            <label v-for="check in selfCheckItems" :key="check.id" class="flex items-center space-x-1.5">
+                <input type="checkbox" v-model="check.done" class="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-400">
                 <span :class="check.done ? 'text-emerald-600' : 'text-slate-400'">{{ check.label }}</span>
             </label>
         </div>
-        <div class="mt-1 text-[10px] text-amber-600 bg-amber-50 p-1 rounded">
-            📌 文末注明字数，格式如：<span class="font-mono bg-white px-1 rounded">（共118字）</span>
+        <div class="mt-1.5 text-[10px] text-amber-600 bg-amber-50/80 px-2.5 py-1 rounded-lg">
+            📌 文末注明字数，格式如：<span class="font-mono bg-white px-1.5 py-0.5 rounded text-[10px] border border-amber-200">（共118字）</span>
         </div>
     </div>
 
-    <div class="mt-3 flex space-x-3">
+    <div class="mt-2 flex space-x-3">
         <button v-if="!submitted" @click="evaluateAnswer"
-        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow">
-        <i class="fa-solid fa-paper-plane mr-1"></i> 提交评估
+        class="flex-1 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-2.5 px-4 rounded-xl shadow-md shadow-indigo-500/25 transition-all duration-200 hover:shadow-lg hover:shadow-indigo-500/30 flex items-center justify-center space-x-2">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>提交评估</span>
     </button>
     <button v-else @click="resetAnswer"
-    class="flex-1 bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg shadow">
-    <i class="fa-solid fa-rotate-left mr-1"></i> 重新作答
+    class="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white font-bold py-2.5 px-4 rounded-xl shadow-md shadow-slate-500/20 transition-all duration-200 hover:shadow-lg flex items-center justify-center space-x-2">
+    <i class="fa-solid fa-rotate-left"></i>
+    <span>重新作答</span>
 </button>
 <button v-if="submitted" @click="clearHistory"
-class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg shadow text-xs">
+class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-xl transition-colors duration-200 text-sm shadow-sm">
 <i class="fa-solid fa-trash-can"></i>
 </button>
 </div>
 </div>
 
 <!-- 评估结果 -->
-<div v-if="submitted" class="bg-white rounded-xl shadow-lg border border-indigo-200 p-4 space-y-3">
+<div v-if="submitted" class="bg-white rounded-2xl shadow-md border border-indigo-100/80 p-4 space-y-3">
 
-    <div class="flex justify-between border-b pb-2">
+    <div class="flex justify-between border-b border-slate-100/80 pb-2">
         <div>
             <h3 class="font-bold text-slate-800 text-sm">📊 评估报告</h3>
             <span class="text-[10px] text-slate-400">第 {{ history.length }} 次练习</span>
         </div>
         <div class="text-right">
-            <span class="text-2xl font-extrabold text-indigo-600">{{ evaluation.finalScore }}</span>
+            <span class="text-2xl font-extrabold" :class="evaluation.finalScore >= 16 ? 'text-emerald-600' : evaluation.finalScore >= 12 ? 'text-amber-600' : 'text-rose-500'">
+                {{ evaluation.finalScore }}
+            </span>
             <span class="text-slate-400 font-bold"> / 20</span>
         </div>
     </div>
 
-    <div v-if="history.length > 1" class="bg-slate-50 p-2 rounded-lg border border-slate-200">
-        <div class="text-[10px] font-bold text-slate-500 mb-1">📈 进步趋势</div>
+    <!-- 历史趋势 -->
+    <div v-if="history.length > 1" class="bg-slate-50/80 p-2.5 rounded-xl border border-slate-200/60">
+        <div class="text-[10px] font-bold text-slate-500 mb-1.5">📈 进步趋势</div>
         <div class="flex items-center space-x-1 overflow-x-auto py-1">
             <span v-for="(item, idx) in history" :key="idx" class="flex items-center">
-                <span class="text-[9px] text-slate-400 mr-0.5">{{ idx+1 }}</span>
+                <span class="text-[9px] text-slate-400 mr-0.5 w-3 text-center">{{ idx+1 }}</span>
                 <span class="trend-dot" :style="{ background: item.score >= 16 ? '#22c55e' : item.score >= 12 ? '#eab308' : '#ef4444' }"></span>
                 <span v-if="idx < history.length - 1" class="trend-line"></span>
             </span>
-            <span class="text-[9px] text-slate-400 ml-1">得分: {{ history[history.length-1].score }}</span>
+            <span class="text-[9px] text-slate-400 ml-2 font-medium">{{ history[history.length-1].score }}分</span>
         </div>
     </div>
 
-    <div class="bg-slate-50 p-2 rounded-lg border border-slate-200">
-        <div class="text-xs font-bold text-slate-600">📝 SPM字数审核</div>
-        <div class="grid grid-cols-3 gap-1 text-[10px] mt-1">
-            <div>实字: <strong>{{ actualWordCount }}</strong></div>
-            <div>上限: <strong>{{ currentQuestion.word_limit }}</strong></div>
-            <div>宽限: <strong>+4</strong></div>
-            <div>超出: <strong class="text-rose-600">{{ excessWords > 0 ? excessWords : '0' }}</strong></div>
-            <div>扣分: <strong class="text-rose-600">-{{ wordPenalty }}</strong></div>
-            <div>声明: <strong>{{ declaredWordCount || '未注明' }}</strong></div>
+    <!-- 字数审核 -->
+    <div class="bg-slate-50/80 p-3 rounded-xl border border-slate-200/60">
+        <div class="text-[10px] font-bold text-slate-500 mb-1.5">📝 SPM字数审核</div>
+        <div class="grid grid-cols-3 gap-1 text-[10px]">
+            <div>实字: <strong class="text-slate-700">{{ actualWordCount }}</strong></div>
+            <div>上限: <strong class="text-slate-700">{{ currentQuestion.word_limit }}</strong></div>
+            <div>宽限: <strong class="text-emerald-600">+4</strong></div>
+            <div>超出: <strong class="text-rose-500">{{ excessWords > 0 ? excessWords : '0' }}</strong></div>
+            <div>扣分: <strong class="text-rose-500">-{{ wordPenalty }}</strong></div>
+            <div>声明: <strong class="text-slate-700">{{ declaredWordCount || '未注明' }}</strong></div>
         </div>
-        <div v-if="wordStatus === 'grace'" class="text-[10px] text-amber-600 mt-1">✅ 在宽限区内，不扣分</div>
-        <div v-else-if="wordStatus === 'penalty'" class="text-[10px] text-rose-600 mt-1">⚠️ 超出 {{ excessWords }} 字，扣 {{ wordPenalty }} 分</div>
-        <div v-else class="text-[10px] text-emerald-600 mt-1">✅ 字数符合要求</div>
-        <div v-if="declaredWordCount > 0 && declaredWordCount !== actualWordCount" class="text-[10px] text-rose-600 mt-1">
+        <div v-if="wordStatus === 'grace'" class="text-[10px] text-amber-600 mt-1.5">✅ 在宽限区内，不扣分</div>
+        <div v-else-if="wordStatus === 'penalty'" class="text-[10px] text-rose-500 mt-1.5">⚠️ 超出 {{ excessWords }} 字，扣 {{ wordPenalty }} 分</div>
+        <div v-else class="text-[10px] text-emerald-600 mt-1.5">✅ 字数符合要求</div>
+        <div v-if="declaredWordCount > 0 && declaredWordCount !== actualWordCount" class="text-[10px] text-rose-500 mt-1">
             ⚠️ 声明字数与实际不符（虚报会被扣分！）
         </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2 rounded-lg">
+    <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50/80 p-2.5 rounded-xl">
         <div>要点得分: <strong class="text-emerald-600">+{{ evaluation.contentScore }}</strong></div>
-        <div>字数扣分: <strong class="text-rose-600">-{{ wordPenalty }}</strong></div>
+        <div>字数扣分: <strong class="text-rose-500">-{{ wordPenalty }}</strong></div>
     </div>
 
+    <!-- 采分点 -->
     <div>
-        <h4 class="text-xs font-bold text-slate-500 mb-1">📌 采分点匹配详情</h4>
-        <div class="space-y-1 max-h-32 overflow-y-auto">
+        <h4 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">📌 采分点匹配详情</h4>
+        <div class="space-y-1 max-h-32 overflow-y-auto pr-1">
             <div v-for="item in evaluation.details" :key="item.point_id"
-            class="p-1.5 rounded text-xs border flex justify-between items-center"
+            class="p-2 rounded-xl text-xs border flex justify-between items-center"
             :class="item.hit ? 'hit-score' : 'miss-score'">
-            <div class="flex flex-wrap items-center gap-1">
-                <i :class="item.hit ? 'fa-solid fa-check-circle text-emerald-600' : 'fa-solid fa-xmark-circle text-rose-500'"></i>
+            <div class="flex flex-wrap items-center gap-1.5">
+                <i :class="item.hit ? 'fa-regular fa-circle-check text-emerald-600' : 'fa-regular fa-circle-xmark text-rose-500'"></i>
                 <span :class="item.hit ? 'text-emerald-800' : 'text-rose-800'">
                     {{ item.keyword_display }}
                 </span>
-                <span v-if="item.hit" class="text-emerald-600 text-[10px]">
+                <span v-if="item.hit" class="text-emerald-600 text-[10px] font-medium">
                     ✓ {{ item.matched_keywords.join('、') }}
                 </span>
-                <span v-if="!item.hit && item.missed_keywords.length > 0" class="text-rose-500 text-[10px]">
+                <span v-if="!item.hit && item.missed_keywords.length > 0" class="text-rose-500 text-[10px] font-medium">
                     ✗ 缺少: {{ item.missed_keywords.join('、') }}
                 </span>
-                <span v-if="item.partial_count > 0 && !item.hit" class="text-amber-500 text-[10px]">
+                <span v-if="item.partial_count > 0 && !item.hit" class="text-amber-500 text-[10px] font-medium">
                     ⚡ 部分匹配: {{ item.partial_count }}处
                 </span>
             </div>
@@ -391,25 +415,27 @@ class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg shado
     </div>
 </div>
 
+<!-- 范文 -->
 <div>
     <button @click="showSample = !showSample"
-    class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex justify-between w-full bg-indigo-50 p-2 rounded">
-    <span><i class="fa-solid fa-award mr-1"></i> 查看范文拆解</span>
+    class="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex justify-between w-full bg-indigo-50/80 hover:bg-indigo-100/80 p-2.5 rounded-xl transition-all duration-200">
+    <span><i class="fa-regular fa-award mr-1.5"></i> 查看范文拆解</span>
     <i :class="showSample ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></i>
 </button>
 <div v-if="showSample" class="mt-2 space-y-2">
-    <div class="p-3 bg-indigo-950 text-indigo-100 rounded-lg text-xs leading-relaxed serif-text">
-        <p>{{ getSampleText() }}</p>
-        <div class="mt-2 pt-2 border-t border-indigo-700 text-indigo-300 text-[10px] flex justify-between">
+    <div class="p-4 bg-gradient-to-r from-indigo-950 to-indigo-900 text-indigo-100 rounded-xl text-xs leading-relaxed serif-text shadow-lg">
+        <p class="leading-relaxed">{{ getSampleText() }}</p>
+        <div class="mt-2.5 pt-2.5 border-t border-indigo-700/50 text-indigo-300/80 text-[10px] flex justify-between">
             <span>📊 系统计算：<strong class="text-amber-300">{{ getSampleWordCount() }}</strong> 字</span>
             <span>（标点不计）</span>
         </div>
     </div>
-    <div class="p-2 bg-slate-50 rounded-lg border border-slate-200">
-        <div class="text-[10px] font-bold text-slate-600">🔍 范文结构拆解：</div>
+    <div class="p-3 bg-slate-50/80 rounded-xl border border-slate-200/60">
+        <div class="text-[10px] font-bold text-slate-500">🔍 范文结构拆解：</div>
         <div class="text-[10px] text-slate-500 mt-0.5 space-y-0.5">
-            <div v-for="(part, idx) in getSampleStructure()" :key="idx">
-                <span class="text-indigo-500 font-bold">{{ idx+1 }}.</span> {{ part }}
+            <div v-for="(part, idx) in getSampleStructure()" :key="idx" class="flex items-start gap-1.5">
+                <span class="text-indigo-500 font-bold w-4 text-right">{{ idx+1 }}.</span>
+                <span>{{ part }}</span>
             </div>
         </div>
     </div>
