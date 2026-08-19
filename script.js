@@ -1,5 +1,5 @@
 // ============================================
-// script.js - Vue 逻辑（修复加载顺序）
+// script.js - Vue 逻辑（完整修复版）
 // ============================================
 
 const { createApp, ref, computed, reactive, onBeforeUnmount, nextTick } = Vue;
@@ -131,7 +131,7 @@ createApp({
 
         const currentQuestion = computed(() => questions[0]);
 
-        // ==================== 自评清单（提前定义） ====================
+        // ==================== 自评清单 ====================
         const selfCheckItems = ref([
             { id: 1, label: '已覆盖所有主要情节/要点', done: false },
             { id: 2, label: '字数在宽限区内（≤+4字）', done: false },
@@ -454,7 +454,7 @@ createApp({
             showToast('✅ 评估完成！', 'success');
         };
 
-        // ==================== 提取要点 ====================
+        // ==================== 🛠️ 提取要点（修复版） ====================
         const handleTextSelection = () => {
             if (isExamMode.value) return;
 
@@ -494,15 +494,23 @@ createApp({
             });
         };
 
+        // 修复：提取要点 - 确保响应式更新
         const extractSelection = () => {
+            console.log('✅ extractSelection 被调用');
+            console.log('📝 selectedText:', selectedText);
+            
             if (selectedText && selectedText.trim().length > 0) {
                 const exists = extractedPoints.value.some(p => p.text === selectedText);
+                console.log('🔍 检查是否已存在:', exists);
+                
                 if (!exists) {
                     const newPoint = {
                         text: selectedText,
                         verified: undefined
                     };
+                    // 强制触发响应式更新
                     extractedPoints.value = [...extractedPoints.value, newPoint];
+                    console.log('✅ 提取成功，当前列表:', extractedPoints.value);
                     showToast(`📌 已提取："${selectedText}"`, 'success');
                 } else {
                     showToast('⚠️ 已存在相同要点', 'info');
