@@ -1,8 +1,8 @@
 // ============================================
-// script.js - Vue 逻辑
+// script.js - Vue 逻辑（修复版）
 // ============================================
 
-const { createApp, ref, computed, reactive, onBeforeUnmount } = Vue;
+const { createApp, ref, computed, reactive, onBeforeUnmount, nextTick } = Vue;
 
 createApp({
     setup() {
@@ -446,27 +446,46 @@ createApp({
             showToast('✅ 评估完成！', 'success');
         };
 
-        // ==================== 浮动按钮 ====================
+        // ==================== 🛠️ 修复：浮动提取按钮 ====================
         const handleTextSelection = (event) => {
             if (isExamMode.value) return;
-            const selection = window.getSelection();
-            if (!selection || selection.isCollapsed) {
-                showFloatBtn.value = false;
-                return;
-            }
-            const text = selection.toString().trim();
-            if (text.length > 1 && text.length < 50) {
-                selectedText = text;
-                showFloatBtn.value = true;
-                const rect = selection.getRangeAt(0).getBoundingClientRect();
-                const container = event.currentTarget.getBoundingClientRect();
-                floatBtnStyle.value = {
-                    top: (rect.top - container.top - 30) + 'px',
-                    left: (rect.left - container.left + rect.width / 2 - 40) + 'px'
-                };
-            } else {
-                showFloatBtn.value = false;
-            }
+
+            // 使用 nextTick 确保选择完成
+            nextTick(() => {
+                const selection = window.getSelection();
+                if (!selection || selection.isCollapsed) {
+                    showFloatBtn.value = false;
+                    return;
+                }
+
+                const text = selection.toString().trim();
+                if (text.length > 1 && text.length < 50) {
+                    selectedText = text;
+                    showFloatBtn.value = true;
+
+                    try {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+                        const container = document.querySelector('.scroll-area');
+                        if (container) {
+                            const containerRect = container.getBoundingClientRect();
+                            floatBtnStyle.value = {
+                                top: (rect.top - containerRect.top - 30) + 'px',
+                                left: (rect.left - containerRect.left + rect.width / 2 - 40) + 'px'
+                            };
+                        }
+                    } catch (e) {
+                        // 如果获取位置失败，使用默认位置
+                        floatBtnStyle.value = {
+                            top: '30px',
+                            left: '50%',
+                            transform: 'translateX(-50%)'
+                        };
+                    }
+                } else {
+                    showFloatBtn.value = false;
+                }
+            });
         };
 
         const extractSelection = () => {
@@ -486,6 +505,7 @@ createApp({
             window.getSelection().removeAllRanges();
         };
 
+        // ==================== 插入要点到书写区 ====================
         const insertPoint = (text) => {
             const textarea = document.querySelector('textarea');
             if (textarea) {
@@ -628,6 +648,7 @@ createApp({
             { id: 4, label: '已在文末注明确实字数', done: false }
         ]);
 
+        // ==================== 初始化 ====================
         const init = () => {
             try {
                 const saved = localStorage.getItem(`history_${currentQuestion.value.id}`);
