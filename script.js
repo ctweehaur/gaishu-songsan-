@@ -1,5 +1,5 @@
 // ============================================
-// script.js - Vue 逻辑（修复版）
+// script.js - Vue 逻辑（修复加载顺序）
 // ============================================
 
 const { createApp, ref, computed, reactive, onBeforeUnmount, nextTick } = Vue;
@@ -130,6 +130,14 @@ createApp({
         let selectedText = '';
 
         const currentQuestion = computed(() => questions[0]);
+
+        // ==================== 自评清单（提前定义） ====================
+        const selfCheckItems = ref([
+            { id: 1, label: '已覆盖所有主要情节/要点', done: false },
+            { id: 2, label: '字数在宽限区内（≤+4字）', done: false },
+            { id: 3, label: '语言通顺，无重大语病', done: false },
+            { id: 4, label: '已在文末注明确实字数', done: false }
+        ]);
 
         // ==================== 计算属性 ====================
         const actualWordCount = computed(() => countSPMWords(userInput.value));
@@ -446,7 +454,7 @@ createApp({
             showToast('✅ 评估完成！', 'success');
         };
 
-        // ==================== 🛠️ 修复：提取要点 ====================
+        // ==================== 提取要点 ====================
         const handleTextSelection = () => {
             if (isExamMode.value) return;
 
@@ -490,7 +498,6 @@ createApp({
             if (selectedText && selectedText.trim().length > 0) {
                 const exists = extractedPoints.value.some(p => p.text === selectedText);
                 if (!exists) {
-                    // 使用展开运算符创建新数组，强制触发响应式更新
                     const newPoint = {
                         text: selectedText,
                         verified: undefined
@@ -549,19 +556,6 @@ createApp({
 
         const getSampleText = () => currentQuestion.value.standard_summary || '';
         const getSampleWordCount = () => countSPMWords(currentQuestion.value.standard_summary || '');
-
-        // ==================== 初始化 ====================
-        // 单题模式，直接加载第一个题目
-        const init = () => {
-            currentQIndex.value = 0;
-            try {
-                const saved = localStorage.getItem(`history_${currentQuestion.value.id}`);
-                if (saved) history.value = JSON.parse(saved);
-                const draft = localStorage.getItem(`draft_${currentQuestion.value.id}`);
-                if (draft) userInput.value = draft;
-            } catch (e) {}
-        };
-        init();
 
         const autoSave = () => {
             if (!submitted.value) {
@@ -622,12 +616,16 @@ createApp({
             }
         };
 
-        const selfCheckItems = ref([
-            { id: 1, label: '已覆盖所有主要情节/要点', done: false },
-            { id: 2, label: '字数在宽限区内（≤+4字）', done: false },
-            { id: 3, label: '语言通顺，无重大语病', done: false },
-            { id: 4, label: '已在文末注明确实字数', done: false }
-        ]);
+        // ==================== 初始化 ====================
+        const init = () => {
+            try {
+                const saved = localStorage.getItem(`history_${currentQuestion.value.id}`);
+                if (saved) history.value = JSON.parse(saved);
+                const draft = localStorage.getItem(`draft_${currentQuestion.value.id}`);
+                if (draft) userInput.value = draft;
+            } catch (e) {}
+        };
+        init();
 
         onBeforeUnmount(() => {
             if (timerInterval) clearInterval(timerInterval);
