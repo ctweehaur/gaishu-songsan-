@@ -1,5 +1,5 @@
 // ============================================
-// script.js - Vue 逻辑（完整修复版）
+// script.js - Vue 逻辑（修复提取要点功能）
 // ============================================
 
 const { createApp, ref, computed, reactive, onBeforeUnmount, nextTick } = Vue;
@@ -127,7 +127,7 @@ createApp({
 
         const showFloatBtn = ref(false);
         const floatBtnStyle = ref({ top: '0px', left: '0px' });
-        let selectedText = '';
+        const pendingText = ref(''); // 存储待提取的文本
 
         const currentQuestion = computed(() => questions[0]);
 
@@ -454,7 +454,7 @@ createApp({
             showToast('✅ 评估完成！', 'success');
         };
 
-        // ==================== 🛠️ 提取要点（修复版） ====================
+        // ==================== 🛠️ 提取要点（可靠修复版） ====================
         const handleTextSelection = () => {
             if (isExamMode.value) return;
 
@@ -467,7 +467,7 @@ createApp({
 
                 const text = selection.toString().trim();
                 if (text.length > 1 && text.length < 50) {
-                    selectedText = text;
+                    pendingText.value = text;
                     showFloatBtn.value = true;
 
                     try {
@@ -494,24 +494,22 @@ createApp({
             });
         };
 
-        // 修复：提取要点 - 确保响应式更新
+        // 修复：直接使用 pendingText
         const extractSelection = () => {
-            console.log('✅ extractSelection 被调用');
-            console.log('📝 selectedText:', selectedText);
+            const text = pendingText.value;
+            console.log('✅ extractSelection 被调用, text:', text);
             
-            if (selectedText && selectedText.trim().length > 0) {
-                const exists = extractedPoints.value.some(p => p.text === selectedText);
-                console.log('🔍 检查是否已存在:', exists);
-                
+            if (text && text.trim().length > 0) {
+                const exists = extractedPoints.value.some(p => p.text === text);
                 if (!exists) {
-                    const newPoint = {
-                        text: selectedText,
+                    extractedPoints.value.push({
+                        text: text,
                         verified: undefined
-                    };
-                    // 强制触发响应式更新
-                    extractedPoints.value = [...extractedPoints.value, newPoint];
+                    });
+                    // 触发响应式更新
+                    extractedPoints.value = [...extractedPoints.value];
                     console.log('✅ 提取成功，当前列表:', extractedPoints.value);
-                    showToast(`📌 已提取："${selectedText}"`, 'success');
+                    showToast(`📌 已提取："${text}"`, 'success');
                 } else {
                     showToast('⚠️ 已存在相同要点', 'info');
                 }
@@ -519,6 +517,7 @@ createApp({
                 showToast('⚠️ 请先选择文字', 'info');
             }
             showFloatBtn.value = false;
+            pendingText.value = '';
             window.getSelection().removeAllRanges();
         };
 
@@ -663,6 +662,7 @@ createApp({
             selfCheckItems,
             showFloatBtn,
             floatBtnStyle,
+            pendingText,
             toast,
             confirm,
             keywordSlots,
